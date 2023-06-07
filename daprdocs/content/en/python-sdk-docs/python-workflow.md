@@ -117,7 +117,7 @@ def main():
         print(f"start_resp {start_resp.instance_id}")
 ```
 
-Dapr then paused and resumed the workflow:
+It then paused and resumed the workflow:
 
 ```python
        # Pause
@@ -131,7 +131,7 @@ Dapr then paused and resumed the workflow:
         print(f"Get response from {workflowName} after resume call: {getResponse.runtime_status}")
 ```
 
-Once the workflow resumed, Dapr raised a workflow event and printed the new counter value:
+Once the workflow resumed, a workflow event was raised, printing the new counter value:
 
 ```python
         # Raise event
@@ -139,7 +139,7 @@ Once the workflow resumed, Dapr raised a workflow event and printed the new coun
                     event_name=eventName, event_data=eventData)
 ```
 
-To clear out the workflow state from your state store, Dapr purged the workflow:
+To clear out the workflow state from your state store, it purged the workflow:
 
 ```python
         # Purge
@@ -153,7 +153,7 @@ To clear out the workflow state from your state store, Dapr purged the workflow:
 
 The sample then demonstrated terminating a workflow by:
 - Starting a new workflow using the same `instanceId` as the purged workflow.
-- Terminating the workflow and purging before shutting down the workflow.
+- Terminating the workflow and purging again before shutting down the workflow.
 
 ```python
         # Kick off another workflow
