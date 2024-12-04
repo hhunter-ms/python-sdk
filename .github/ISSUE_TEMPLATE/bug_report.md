@@ -1,7 +1,7 @@
 ---
-name: Bug report
-about: Report a bug in python-sdk
-title: ''
+name: Python Dapr Client SDK Bug report (not workflow SDK)
+about: Report a bug in python-sdk (not dapr-ext-workflow)
+title: '[BUG] <title>'
 labels: kind/bug
 assignees: ''
 

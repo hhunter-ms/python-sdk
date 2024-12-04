@@ -17,28 +17,33 @@ import aiohttp
 
 from typing import Callable, Mapping, Dict, Optional, Union, Tuple, TYPE_CHECKING
 
+from dapr.clients.health import DaprHealth
+from dapr.clients.http.conf import (
+    DAPR_API_TOKEN_HEADER,
+    USER_AGENT_HEADER,
+    DAPR_USER_AGENT,
+    CONTENT_TYPE_HEADER,
+)
+from dapr.clients.retry import RetryPolicy
+
 if TYPE_CHECKING:
     from dapr.serializers import Serializer
 
 from dapr.conf import settings
 from dapr.clients.base import DEFAULT_JSON_CONTENT_TYPE
 from dapr.clients.exceptions import DaprInternalError, ERROR_CODE_DOES_NOT_EXIST, ERROR_CODE_UNKNOWN
-from dapr.version import __version__
-
-CONTENT_TYPE_HEADER = 'content-type'
-DAPR_API_TOKEN_HEADER = 'dapr-api-token'
-USER_AGENT_HEADER = 'User-Agent'
-DAPR_USER_AGENT = f'dapr-sdk-python/{__version__}'
 
 
 class DaprHttpClient:
     """A Dapr Http API client"""
 
-    def __init__(self,
-                 message_serializer: 'Serializer',
-                 timeout: Optional[int] = 60,
-                 headers_callback: Optional[Callable[[], Dict[str, str]]] = None,
-                 address: Optional[str] = None):
+    def __init__(
+        self,
+        message_serializer: 'Serializer',
+        timeout: Optional[int] = 60,
+        headers_callback: Optional[Callable[[], Dict[str, str]]] = None,
+        retry_policy: Optional[RetryPolicy] = None,
+    ):
         """Invokes Dapr over HTTP.
 
         Args:
@@ -46,26 +51,21 @@ class DaprHttpClient:
             timeout (int, optional): Timeout in seconds, defaults to 60.
             headers_callback (lambda: Dict[str, str]], optional): Generates header for each request.
         """
+        DaprHealth.wait_until_ready()
+
         self._timeout = aiohttp.ClientTimeout(total=timeout)
         self._serializer = message_serializer
         self._headers_callback = headers_callback
-        self._address = address
-
-    def get_api_url(self) -> str:
-        if self._address:
-            return '{}/{}'.format(self._address, settings.DAPR_API_VERSION)
-        if settings.DAPR_HTTP_ENDPOINT:
-            return '{}/{}'.format(settings.DAPR_HTTP_ENDPOINT, settings.DAPR_API_VERSION)
-        else:
-            return 'http://{}:{}/{}'.format(settings.DAPR_RUNTIME_HOST,
-                                            settings.DAPR_HTTP_PORT, settings.DAPR_API_VERSION)
+        self.retry_policy = retry_policy or RetryPolicy()
 
     async def send_bytes(
-            self, method: str, url: str,
-            data: Optional[bytes],
-            headers: Dict[str, Union[bytes, str]] = {},
-            query_params: Optional[Mapping] = None,
-            timeout: Optional[int] = None
+        self,
+        method: str,
+        url: str,
+        data: Optional[bytes],
+        headers: Dict[str, Union[bytes, str]] = {},
+        query_params: Optional[Mapping] = None,
+        timeout: Optional[int] = None,
     ) -> Tuple[bytes, aiohttp.ClientResponse]:
         headers_map = headers
         if not headers_map.get(CONTENT_TYPE_HEADER):
@@ -84,36 +84,45 @@ class DaprHttpClient:
         client_timeout = aiohttp.ClientTimeout(total=timeout) if timeout else self._timeout
         sslcontext = self.get_ssl_context()
 
-        async with aiohttp.ClientSession(timeout=client_timeout) as session:
-            r = await session.request(
-                method=method,
-                url=url,
-                data=data,
-                headers=headers_map,
-                ssl=sslcontext,
-                params=query_params)
+        async with aiohttp.ClientSession() as session:
+            req = {
+                'method': method,
+                'url': url,
+                'data': data,
+                'headers': headers_map,
+                'sslcontext': sslcontext,
+                'params': query_params,
+                'timeout': client_timeout,
+            }
+            r = await self.retry_policy.make_http_call(session, req)
 
-            if r.status >= 200 and r.status < 300:
+            if 200 <= r.status < 300:
                 return await r.read(), r
 
             raise (await self.convert_to_error(r))
 
-    async def convert_to_error(self, response) -> DaprInternalError:
+    async def convert_to_error(self, response: aiohttp.ClientResponse) -> DaprInternalError:
         error_info = None
         try:
             error_body = await response.read()
             if (error_body is None or len(error_body) == 0) and response.status == 404:
-                return DaprInternalError("Not Found", ERROR_CODE_DOES_NOT_EXIST)
+                return DaprInternalError('Not Found', ERROR_CODE_DOES_NOT_EXIST)
             error_info = self._serializer.deserialize(error_body)
         except Exception:
-            return DaprInternalError(f'Unknown Dapr Error. HTTP status code: {response.status}')
+            return DaprInternalError(
+                f'Unknown Dapr Error. HTTP status code: {response.status}',
+                raw_response_bytes=error_body,
+            )
 
         if error_info and isinstance(error_info, dict):
             message = error_info.get('message')
             error_code = error_info.get('errorCode') or ERROR_CODE_UNKNOWN
-            return DaprInternalError(message, error_code)
+            return DaprInternalError(message, error_code, raw_response_bytes=error_body)
 
-        return DaprInternalError(f'Unknown Dapr Error. HTTP status code: {response.status}')
+        return DaprInternalError(
+            f'Unknown Dapr Error. HTTP status code: {response.status}',
+            raw_response_bytes=error_body,
+        )
 
     def get_ssl_context(self):
         # This method is used (overwritten) from tests

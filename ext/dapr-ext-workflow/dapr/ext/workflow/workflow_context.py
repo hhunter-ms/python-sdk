@@ -15,7 +15,7 @@ limitations under the License.
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Callable, Generator, Optional, TypeVar, Union
 
 from durabletask import task
@@ -29,8 +29,8 @@ TOutput = TypeVar('TOutput')
 
 class WorkflowContext(ABC):
     """Context object used by workflow implementations to perform actions such as scheduling
-       activities, durable timers, waiting for external events, and for getting basic information
-       about the current workflow instance.
+    activities, durable timers, waiting for external events, and for getting basic information
+    about the current workflow instance.
     """
 
     @property
@@ -85,13 +85,13 @@ class WorkflowContext(ABC):
         pass
 
     @abstractmethod
-    def create_timer(self, fire_at: datetime) -> task.Task:
+    def create_timer(self, fire_at: Union[datetime, timedelta]) -> task.Task:
         """Create a Timer Task to fire after at the specified deadline.
 
         Parameters
         ----------
-        fire_at: datetime.datetime
-            The time for the timer to trigger
+        fire_at: datetime.datetime | datetime.timedelta
+            The time for the timer to trigger. Can be specified as a `datetime` or a `timedelta`.
 
         Returns
         -------
@@ -101,8 +101,9 @@ class WorkflowContext(ABC):
         pass
 
     @abstractmethod
-    def call_activity(self, activity: Activity[TOutput], *,
-                      input: Optional[TInput] = None) -> task.Task[TOutput]:
+    def call_activity(
+        self, activity: Activity[TOutput], *, input: Optional[TInput] = None
+    ) -> task.Task[TOutput]:
         """Schedule an activity for execution.
 
         Parameters
@@ -122,9 +123,13 @@ class WorkflowContext(ABC):
         pass
 
     @abstractmethod
-    def call_child_workflow(self, orchestrator: Workflow[TOutput], *,
-                            input: Optional[TInput] = None,
-                            instance_id: Optional[str] = None) -> task.Task[TOutput]:
+    def call_child_workflow(
+        self,
+        orchestrator: Workflow[TOutput],
+        *,
+        input: Optional[TInput] = None,
+        instance_id: Optional[str] = None,
+    ) -> task.Task[TOutput]:
         """Schedule child-workflow function for execution.
 
         Parameters

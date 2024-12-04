@@ -10,8 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import timedelta
 from time import sleep
-from dapr.ext.workflow import WorkflowRuntime, DaprWorkflowContext, WorkflowActivityContext
+from dapr.ext.workflow import (
+    WorkflowRuntime,
+    DaprWorkflowContext,
+    WorkflowActivityContext,
+    RetryPolicy,
+)
 from dapr.conf import Settings
 from dapr.clients import DaprClient
 from dapr.clients.exceptions import DaprInternalError
@@ -19,96 +25,188 @@ from dapr.clients.exceptions import DaprInternalError
 settings = Settings()
 
 counter = 0
-instanceId = "exampleInstanceID"
-workflowComponent = "dapr"
-workflowName = "hello_world_wf"
-inputData = "Hi Counter!"
-workflowOptions = dict()
-workflowOptions["task_queue"] =  "testQueue"
-eventName = "event1"
-eventData = "eventData"
-nonExistentIDError = "no such instance exists"
+retry_count = 0
+child_orchestrator_count = 0
+child_orchestrator_string = ''
+child_act_retry_count = 0
+instance_id = 'exampleInstanceID'
+child_instance_id = 'childInstanceID'
+workflow_component = 'dapr'
+workflow_name = 'hello_world_wf'
+child_workflow_name = 'child_wf'
+input_data = 'Hi Counter!'
+workflow_options = dict()
+workflow_options['task_queue'] = 'testQueue'
+event_name = 'event1'
+event_data = 'eventData'
+non_existent_id_error = 'no such instance exists'
 
-def hello_world_wf(ctx: DaprWorkflowContext, input):
-    print(f'{input}')
+retry_policy = RetryPolicy(
+    first_retry_interval=timedelta(seconds=1),
+    max_number_of_attempts=3,
+    backoff_coefficient=2,
+    max_retry_interval=timedelta(seconds=10),
+    retry_timeout=timedelta(seconds=100),
+)
+
+
+def hello_world_wf(ctx: DaprWorkflowContext, wf_input):
+    print(f'{wf_input}')
     yield ctx.call_activity(hello_act, input=1)
     yield ctx.call_activity(hello_act, input=10)
-    yield ctx.wait_for_external_event("event1")
+    yield ctx.call_activity(hello_retryable_act, retry_policy=retry_policy)
+    yield ctx.call_child_workflow(child_retryable_wf, retry_policy=retry_policy)
+    yield ctx.call_child_workflow(child_wf, instance_id=child_instance_id)
     yield ctx.call_activity(hello_act, input=100)
     yield ctx.call_activity(hello_act, input=1000)
 
-def hello_act(ctx: WorkflowActivityContext, input):
+
+def child_wf(ctx: DaprWorkflowContext):
+    yield ctx.wait_for_external_event('event1')
+
+
+def hello_act(ctx: WorkflowActivityContext, wf_input):
     global counter
-    counter += input
+    counter += wf_input
     print(f'New counter value is: {counter}!', flush=True)
+
+
+def hello_retryable_act(ctx: WorkflowActivityContext):
+    global retry_count
+    if (retry_count % 2) == 0:
+        print(f'Retry count value is: {retry_count}!', flush=True)
+        retry_count += 1
+        raise ValueError('Retryable Error')
+    print(f'Retry count value is: {retry_count}! This print statement verifies retry', flush=True)
+    retry_count += 1
+
+
+def child_retryable_wf(ctx: DaprWorkflowContext):
+    global child_orchestrator_string, child_orchestrator_count
+    if not ctx.is_replaying:
+        child_orchestrator_count += 1
+        print(f'Appending {child_orchestrator_count} to child_orchestrator_string!', flush=True)
+        child_orchestrator_string += str(child_orchestrator_count)
+    yield ctx.call_activity(
+        act_for_child_wf, input=child_orchestrator_count, retry_policy=retry_policy
+    )
+    if child_orchestrator_count < 3:
+        raise ValueError('Retryable Error')
+
+
+def act_for_child_wf(ctx: WorkflowActivityContext, inp):
+    global child_orchestrator_string, child_act_retry_count
+    inp_char = chr(96 + inp)
+    print(f'Appending {inp_char} to child_orchestrator_string!', flush=True)
+    child_orchestrator_string += inp_char
+    if child_act_retry_count % 2 == 0:
+        child_act_retry_count += 1
+        raise ValueError('Retryable Error')
+    child_act_retry_count += 1
+
 
 def main():
     with DaprClient() as d:
-        host = settings.DAPR_RUNTIME_HOST
-        port = settings.DAPR_GRPC_PORT
-        workflowRuntime = WorkflowRuntime(host, port)
-        workflowRuntime.register_workflow(hello_world_wf)
-        workflowRuntime.register_activity(hello_act)
-        workflowRuntime.start()
+        workflow_runtime = WorkflowRuntime()
+        workflow_runtime.register_workflow(hello_world_wf)
+        workflow_runtime.register_workflow(child_retryable_wf)
+        workflow_runtime.register_workflow(child_wf)
+        workflow_runtime.register_activity(hello_act)
+        workflow_runtime.register_activity(hello_retryable_act)
+        workflow_runtime.register_activity(act_for_child_wf)
+        workflow_runtime.start()
 
         sleep(2)
 
-        print("==========Start Counter Increase as per Input:==========")
-        start_resp = d.start_workflow(instance_id=instanceId, workflow_component=workflowComponent,
-                        workflow_name=workflowName, input=inputData, workflow_options=workflowOptions)
-        print(f"start_resp {start_resp.instance_id}")
+        print('==========Start Counter Increase as per Input:==========')
+        start_resp = d.start_workflow(
+            instance_id=instance_id,
+            workflow_component=workflow_component,
+            workflow_name=workflow_name,
+            input=input_data,
+            workflow_options=workflow_options,
+        )
+        print(f'start_resp {start_resp.instance_id}')
 
         # Sleep for a while to let the workflow run
-        sleep(1)
+        sleep(12)
         assert counter == 11
+        assert retry_count == 2
+        assert child_orchestrator_string == '1aa2bb3cc'
 
         # Pause Test
-        d.pause_workflow(instance_id=instanceId, workflow_component=workflowComponent)
-        getResponse = d.get_workflow(instance_id=instanceId, workflow_component=workflowComponent)
-        print(f"Get response from {workflowName} after pause call: {getResponse.runtime_status}")
+        d.pause_workflow(instance_id=instance_id, workflow_component=workflow_component)
+        get_response = d.get_workflow(
+            instance_id=instance_id, workflow_component=workflow_component
+        )
+        print(f'Get response from {workflow_name} after pause call: {get_response.runtime_status}')
 
         # Resume Test
-        d.resume_workflow(instance_id=instanceId, workflow_component=workflowComponent)
-        getResponse = d.get_workflow(instance_id=instanceId, workflow_component=workflowComponent)
-        print(f"Get response from {workflowName} after resume call: {getResponse.runtime_status}")
+        d.resume_workflow(instance_id=instance_id, workflow_component=workflow_component)
+        get_response = d.get_workflow(
+            instance_id=instance_id, workflow_component=workflow_component
+        )
+        print(f'Get response from {workflow_name} after resume call: {get_response.runtime_status}')
 
         sleep(1)
         # Raise event
-        d.raise_workflow_event(instance_id=instanceId, workflow_component=workflowComponent,
-                    event_name=eventName, event_data=eventData)
+        d.raise_workflow_event(
+            instance_id=child_instance_id,
+            workflow_component=workflow_component,
+            event_name=event_name,
+            event_data=event_data,
+        )
 
         sleep(5)
         # Purge Test
-        d.purge_workflow(instance_id=instanceId, workflow_component=workflowComponent)
+        d.purge_workflow(instance_id=instance_id, workflow_component=workflow_component)
         try:
-            getResponse = d.get_workflow(instance_id=instanceId, workflow_component=workflowComponent)
+            d.get_workflow(instance_id=instance_id, workflow_component=workflow_component)
         except DaprInternalError as err:
-            if nonExistentIDError in err._message:
-                print("Instance Successfully Purged")
+            if non_existent_id_error in err._message:
+                print('Instance Successfully Purged')
 
-        
-        # Kick off another workflow for termination purposes 
+        # Kick off another workflow for termination purposes
         # This will also test using the same instance ID on a new workflow after
         # the old instance was purged
-        start_resp = d.start_workflow(instance_id=instanceId, workflow_component=workflowComponent,
-                        workflow_name=workflowName, input=inputData, workflow_options=workflowOptions)
-        print(f"start_resp {start_resp.instance_id}")
+        start_resp = d.start_workflow(
+            instance_id=instance_id,
+            workflow_component=workflow_component,
+            workflow_name=workflow_name,
+            input=input_data,
+            workflow_options=workflow_options,
+        )
+        print(f'start_resp {start_resp.instance_id}')
 
+        sleep(5)
         # Terminate Test
-        d.terminate_workflow(instance_id=instanceId, workflow_component=workflowComponent)
+        d.terminate_workflow(instance_id=instance_id, workflow_component=workflow_component)
         sleep(1)
-        getResponse = d.get_workflow(instance_id=instanceId, workflow_component=workflowComponent)
-        print(f"Get response from {workflowName} after terminate call: {getResponse.runtime_status}")
+        get_response = d.get_workflow(
+            instance_id=instance_id, workflow_component=workflow_component
+        )
+        print(
+            f'Get response from {workflow_name} '
+            f'after terminate call: {get_response.runtime_status}'
+        )
+        child_get_response = d.get_workflow(
+            instance_id=child_instance_id, workflow_component=workflow_component
+        )
+        print(
+            f'Get response from {child_workflow_name} '
+            f'after terminate call: {child_get_response.runtime_status}'
+        )
 
         # Purge Test
-        d.purge_workflow(instance_id=instanceId, workflow_component=workflowComponent)
+        d.purge_workflow(instance_id=instance_id, workflow_component=workflow_component)
         try:
-            getResponse = d.get_workflow(instance_id=instanceId, workflow_component=workflowComponent)
+            d.get_workflow(instance_id=instance_id, workflow_component=workflow_component)
         except DaprInternalError as err:
-            if nonExistentIDError in err._message:
-                print("Instance Successfully Purged")
+            if non_existent_id_error in err._message:
+                print('Instance Successfully Purged')
 
-        workflowRuntime.shutdown()
+        workflow_runtime.shutdown()
+
 
 if __name__ == '__main__':
     main()

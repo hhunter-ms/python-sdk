@@ -16,6 +16,7 @@ limitations under the License.
 import builtins
 import collections.abc
 import dapr.proto.common.v1.common_pb2
+import google.protobuf.any_pb2
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
 import google.protobuf.internal.enum_type_wrapper
@@ -30,6 +31,61 @@ else:
     import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+
+@typing_extensions.final
+class JobEventRequest(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NAME_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    METHOD_FIELD_NUMBER: builtins.int
+    CONTENT_TYPE_FIELD_NUMBER: builtins.int
+    HTTP_EXTENSION_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """Job name."""
+    @property
+    def data(self) -> google.protobuf.any_pb2.Any:
+        """Job data to be sent back to app."""
+    method: builtins.str
+    """Required. method is a method name which will be invoked by caller."""
+    content_type: builtins.str
+    """The type of data content.
+
+    This field is required if data delivers http request body
+    Otherwise, this is optional.
+    """
+    @property
+    def http_extension(self) -> dapr.proto.common.v1.common_pb2.HTTPExtension:
+        """HTTP specific fields if request conveys http-compatible request.
+
+        This field is required for http-compatible request. Otherwise,
+        this field is optional.
+        """
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+        data: google.protobuf.any_pb2.Any | None = ...,
+        method: builtins.str = ...,
+        content_type: builtins.str = ...,
+        http_extension: dapr.proto.common.v1.common_pb2.HTTPExtension | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["data", b"data", "http_extension", b"http_extension"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["content_type", b"content_type", "data", b"data", "http_extension", b"http_extension", "method", b"method", "name", b"name"]) -> None: ...
+
+global___JobEventRequest = JobEventRequest
+
+@typing_extensions.final
+class JobEventResponse(google.protobuf.message.Message):
+    """JobEventResponse is the response from the app when a job is triggered."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___JobEventResponse = JobEventResponse
 
 @typing_extensions.final
 class TopicEventRequest(google.protobuf.message.Message):
@@ -109,7 +165,7 @@ class TopicEventResponse(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TopicEventResponseStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TopicEventResponse._TopicEventResponseStatus.ValueType], builtins.type):  # noqa: F821
+    class _TopicEventResponseStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TopicEventResponse._TopicEventResponseStatus.ValueType], builtins.type):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SUCCESS: TopicEventResponse._TopicEventResponseStatus.ValueType  # 0
         """SUCCESS is the default behavior: message is acknowledged and not retried or logged."""
@@ -396,7 +452,7 @@ class BindingEventResponse(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _BindingEventConcurrencyEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BindingEventResponse._BindingEventConcurrency.ValueType], builtins.type):  # noqa: F821
+    class _BindingEventConcurrencyEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[BindingEventResponse._BindingEventConcurrency.ValueType], builtins.type):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SEQUENTIAL: BindingEventResponse._BindingEventConcurrency.ValueType  # 0
         """SEQUENTIAL sends data to output bindings specified in "to" sequentially."""

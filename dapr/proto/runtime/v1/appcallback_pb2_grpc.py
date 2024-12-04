@@ -301,6 +301,11 @@ class AppCallbackAlphaStub(object):
                 request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkRequest.SerializeToString,
                 response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkResponse.FromString,
                 )
+        self.OnJobEventAlpha1 = channel.unary_unary(
+                '/dapr.proto.runtime.v1.AppCallbackAlpha/OnJobEventAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventRequest.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventResponse.FromString,
+                )
 
 
 class AppCallbackAlphaServicer(object):
@@ -315,6 +320,13 @@ class AppCallbackAlphaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def OnJobEventAlpha1(self, request, context):
+        """Sends job back to the app's endpoint at trigger time.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AppCallbackAlphaServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -322,6 +334,11 @@ def add_AppCallbackAlphaServicer_to_server(servicer, server):
                     servicer.OnBulkTopicEventAlpha1,
                     request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkRequest.FromString,
                     response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkResponse.SerializeToString,
+            ),
+            'OnJobEventAlpha1': grpc.unary_unary_rpc_method_handler(
+                    servicer.OnJobEventAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventRequest.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -349,5 +366,22 @@ class AppCallbackAlpha(object):
         return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.AppCallbackAlpha/OnBulkTopicEventAlpha1',
             dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkRequest.SerializeToString,
             dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.TopicEventBulkResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def OnJobEventAlpha1(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.AppCallbackAlpha/OnJobEventAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventRequest.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_appcallback__pb2.JobEventResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

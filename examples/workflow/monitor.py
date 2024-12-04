@@ -13,7 +13,10 @@
 from dataclasses import dataclass
 from datetime import timedelta
 import random
+from time import sleep
 import dapr.ext.workflow as wf
+
+wfr = wf.WorkflowRuntime()
 
 
 @dataclass
@@ -22,13 +25,14 @@ class JobStatus:
     is_healthy: bool
 
 
+@wfr.workflow(name='status_monitor')
 def status_monitor_workflow(ctx: wf.DaprWorkflowContext, job: JobStatus):
     # poll a status endpoint associated with this job
     status = yield ctx.call_activity(check_status, input=job)
     if not ctx.is_replaying:
         print(f"Job '{job.job_id}' is {status}.")
 
-    if status == "healthy":
+    if status == 'healthy':
         job.is_healthy = True
         next_sleep_interval = 60  # check less frequently when healthy
     else:
@@ -37,29 +41,28 @@ def status_monitor_workflow(ctx: wf.DaprWorkflowContext, job: JobStatus):
             ctx.call_activity(send_alert, input=f"Job '{job.job_id}' is unhealthy!")
         next_sleep_interval = 5  # check more frequently when unhealthy
 
-    yield ctx.create_timer(fire_at=ctx.current_utc_datetime + timedelta(seconds=next_sleep_interval))
+    yield ctx.create_timer(fire_at=timedelta(seconds=next_sleep_interval))
 
     # restart from the beginning with a new JobStatus input
     ctx.continue_as_new(job)
 
 
+@wfr.activity
 def check_status(ctx, _) -> str:
-    return random.choice(["healthy", "unhealthy"])
+    return random.choice(['healthy', 'unhealthy'])
 
 
+@wfr.activity
 def send_alert(ctx, message: str):
     print(f'*** Alert: {message}')
 
 
 if __name__ == '__main__':
-    workflowRuntime = wf.WorkflowRuntime("localhost", "50001")
-    workflowRuntime.register_workflow(status_monitor_workflow)
-    workflowRuntime.register_activity(check_status)
-    workflowRuntime.register_activity(send_alert)
-    workflowRuntime.start()
+    wfr.start()
+    sleep(10)  # wait for workflow runtime to start
 
     wf_client = wf.DaprWorkflowClient()
-    job_id = "job1"
+    job_id = 'job1'
     status = None
     try:
         status = wf_client.get_workflow_state(job_id)
@@ -69,10 +72,11 @@ if __name__ == '__main__':
         instance_id = wf_client.schedule_new_workflow(
             workflow=status_monitor_workflow,
             input=JobStatus(job_id=job_id, is_healthy=True),
-            instance_id=job_id)
+            instance_id=job_id,
+        )
         print(f'Workflow started. Instance ID: {instance_id}')
     else:
         print(f'Workflow already running. Instance ID: {job_id}')
 
-    input("Press Enter to stop...\n")
-    workflowRuntime.shutdown()
+    input('Press Enter to stop...\n')
+    wfr.shutdown()

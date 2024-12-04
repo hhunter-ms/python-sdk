@@ -16,6 +16,7 @@ limitations under the License.
 import builtins
 import collections.abc
 import dapr.proto.common.v1.common_pb2
+import dapr.proto.runtime.v1.appcallback_pb2
 import google.protobuf.any_pb2
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
@@ -31,6 +32,34 @@ else:
     import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+
+class _PubsubSubscriptionType:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _PubsubSubscriptionTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_PubsubSubscriptionType.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    UNKNOWN: _PubsubSubscriptionType.ValueType  # 0
+    """UNKNOWN is the default value for the subscription type."""
+    DECLARATIVE: _PubsubSubscriptionType.ValueType  # 1
+    """Declarative subscription (k8s CRD)"""
+    PROGRAMMATIC: _PubsubSubscriptionType.ValueType  # 2
+    """Programmatically created subscription"""
+    STREAMING: _PubsubSubscriptionType.ValueType  # 3
+    """Bidirectional Streaming subscription"""
+
+class PubsubSubscriptionType(_PubsubSubscriptionType, metaclass=_PubsubSubscriptionTypeEnumTypeWrapper):
+    """PubsubSubscriptionType indicates the type of subscription"""
+
+UNKNOWN: PubsubSubscriptionType.ValueType  # 0
+"""UNKNOWN is the default value for the subscription type."""
+DECLARATIVE: PubsubSubscriptionType.ValueType  # 1
+"""Declarative subscription (k8s CRD)"""
+PROGRAMMATIC: PubsubSubscriptionType.ValueType  # 2
+"""Programmatically created subscription"""
+STREAMING: PubsubSubscriptionType.ValueType  # 3
+"""Bidirectional Streaming subscription"""
+global___PubsubSubscriptionType = PubsubSubscriptionType
 
 @typing_extensions.final
 class InvokeServiceRequest(google.protobuf.message.Message):
@@ -683,6 +712,157 @@ class BulkPublishResponseFailedEntry(google.protobuf.message.Message):
 global___BulkPublishResponseFailedEntry = BulkPublishResponseFailedEntry
 
 @typing_extensions.final
+class SubscribeTopicEventsRequestAlpha1(google.protobuf.message.Message):
+    """SubscribeTopicEventsRequestAlpha1 is a message containing the details for
+    subscribing to a topic via streaming.
+    The first message must always be the initial request. All subsequent
+    messages must be event processed responses.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    INITIAL_REQUEST_FIELD_NUMBER: builtins.int
+    EVENT_PROCESSED_FIELD_NUMBER: builtins.int
+    @property
+    def initial_request(self) -> global___SubscribeTopicEventsRequestInitialAlpha1: ...
+    @property
+    def event_processed(self) -> global___SubscribeTopicEventsRequestProcessedAlpha1: ...
+    def __init__(
+        self,
+        *,
+        initial_request: global___SubscribeTopicEventsRequestInitialAlpha1 | None = ...,
+        event_processed: global___SubscribeTopicEventsRequestProcessedAlpha1 | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["event_processed", b"event_processed", "initial_request", b"initial_request", "subscribe_topic_events_request_type", b"subscribe_topic_events_request_type"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["event_processed", b"event_processed", "initial_request", b"initial_request", "subscribe_topic_events_request_type", b"subscribe_topic_events_request_type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["subscribe_topic_events_request_type", b"subscribe_topic_events_request_type"]) -> typing_extensions.Literal["initial_request", "event_processed"] | None: ...
+
+global___SubscribeTopicEventsRequestAlpha1 = SubscribeTopicEventsRequestAlpha1
+
+@typing_extensions.final
+class SubscribeTopicEventsRequestInitialAlpha1(google.protobuf.message.Message):
+    """SubscribeTopicEventsRequestInitialAlpha1 is the initial message containing
+    the details for subscribing to a topic via streaming.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing_extensions.final
+    class MetadataEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        value: builtins.str
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: builtins.str = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    PUBSUB_NAME_FIELD_NUMBER: builtins.int
+    TOPIC_FIELD_NUMBER: builtins.int
+    METADATA_FIELD_NUMBER: builtins.int
+    DEAD_LETTER_TOPIC_FIELD_NUMBER: builtins.int
+    pubsub_name: builtins.str
+    """The name of the pubsub component"""
+    topic: builtins.str
+    """The pubsub topic"""
+    @property
+    def metadata(self) -> google.protobuf.internal.containers.ScalarMap[builtins.str, builtins.str]:
+        """The metadata passing to pub components
+
+        metadata property:
+        - key : the key of the message.
+        """
+    dead_letter_topic: builtins.str
+    """dead_letter_topic is the topic to which messages that fail to be processed
+    are sent.
+    """
+    def __init__(
+        self,
+        *,
+        pubsub_name: builtins.str = ...,
+        topic: builtins.str = ...,
+        metadata: collections.abc.Mapping[builtins.str, builtins.str] | None = ...,
+        dead_letter_topic: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_dead_letter_topic", b"_dead_letter_topic", "dead_letter_topic", b"dead_letter_topic"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_dead_letter_topic", b"_dead_letter_topic", "dead_letter_topic", b"dead_letter_topic", "metadata", b"metadata", "pubsub_name", b"pubsub_name", "topic", b"topic"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_dead_letter_topic", b"_dead_letter_topic"]) -> typing_extensions.Literal["dead_letter_topic"] | None: ...
+
+global___SubscribeTopicEventsRequestInitialAlpha1 = SubscribeTopicEventsRequestInitialAlpha1
+
+@typing_extensions.final
+class SubscribeTopicEventsRequestProcessedAlpha1(google.protobuf.message.Message):
+    """SubscribeTopicEventsRequestProcessedAlpha1 is the message containing the
+    subscription to a topic.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ID_FIELD_NUMBER: builtins.int
+    STATUS_FIELD_NUMBER: builtins.int
+    id: builtins.str
+    """id is the unique identifier for the subscription request."""
+    @property
+    def status(self) -> dapr.proto.runtime.v1.appcallback_pb2.TopicEventResponse:
+        """status is the result of the subscription request."""
+    def __init__(
+        self,
+        *,
+        id: builtins.str = ...,
+        status: dapr.proto.runtime.v1.appcallback_pb2.TopicEventResponse | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["status", b"status"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["id", b"id", "status", b"status"]) -> None: ...
+
+global___SubscribeTopicEventsRequestProcessedAlpha1 = SubscribeTopicEventsRequestProcessedAlpha1
+
+@typing_extensions.final
+class SubscribeTopicEventsResponseAlpha1(google.protobuf.message.Message):
+    """SubscribeTopicEventsResponseAlpha1 is a message returned from daprd
+    when subscribing to a topic via streaming.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    INITIAL_RESPONSE_FIELD_NUMBER: builtins.int
+    EVENT_MESSAGE_FIELD_NUMBER: builtins.int
+    @property
+    def initial_response(self) -> global___SubscribeTopicEventsResponseInitialAlpha1: ...
+    @property
+    def event_message(self) -> dapr.proto.runtime.v1.appcallback_pb2.TopicEventRequest: ...
+    def __init__(
+        self,
+        *,
+        initial_response: global___SubscribeTopicEventsResponseInitialAlpha1 | None = ...,
+        event_message: dapr.proto.runtime.v1.appcallback_pb2.TopicEventRequest | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["event_message", b"event_message", "initial_response", b"initial_response", "subscribe_topic_events_response_type", b"subscribe_topic_events_response_type"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["event_message", b"event_message", "initial_response", b"initial_response", "subscribe_topic_events_response_type", b"subscribe_topic_events_response_type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["subscribe_topic_events_response_type", b"subscribe_topic_events_response_type"]) -> typing_extensions.Literal["initial_response", "event_message"] | None: ...
+
+global___SubscribeTopicEventsResponseAlpha1 = SubscribeTopicEventsResponseAlpha1
+
+@typing_extensions.final
+class SubscribeTopicEventsResponseInitialAlpha1(google.protobuf.message.Message):
+    """SubscribeTopicEventsResponseInitialAlpha1 is the initial response from daprd
+    when subscribing to a topic.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___SubscribeTopicEventsResponseInitialAlpha1 = SubscribeTopicEventsResponseInitialAlpha1
+
+@typing_extensions.final
 class InvokeBindingRequest(google.protobuf.message.Message):
     """InvokeBindingRequest is the message to send data to output bindings"""
 
@@ -718,6 +898,7 @@ class InvokeBindingRequest(google.protobuf.message.Message):
 
         Common metadata property:
         - ttlInSeconds : the time to live in seconds for the message.
+
         If set in the binding definition will cause all messages to
         have a default time to live. The message ttl overrides any value
         in the binding definition.
@@ -1155,32 +1336,6 @@ class UnregisterActorReminderRequest(google.protobuf.message.Message):
 global___UnregisterActorReminderRequest = UnregisterActorReminderRequest
 
 @typing_extensions.final
-class RenameActorReminderRequest(google.protobuf.message.Message):
-    """RenameActorReminderRequest is the message to rename an actor reminder."""
-
-    DESCRIPTOR: google.protobuf.descriptor.Descriptor
-
-    ACTOR_TYPE_FIELD_NUMBER: builtins.int
-    ACTOR_ID_FIELD_NUMBER: builtins.int
-    OLD_NAME_FIELD_NUMBER: builtins.int
-    NEW_NAME_FIELD_NUMBER: builtins.int
-    actor_type: builtins.str
-    actor_id: builtins.str
-    old_name: builtins.str
-    new_name: builtins.str
-    def __init__(
-        self,
-        *,
-        actor_type: builtins.str = ...,
-        actor_id: builtins.str = ...,
-        old_name: builtins.str = ...,
-        new_name: builtins.str = ...,
-    ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["actor_id", b"actor_id", "actor_type", b"actor_type", "new_name", b"new_name", "old_name", b"old_name"]) -> None: ...
-
-global___RenameActorReminderRequest = RenameActorReminderRequest
-
-@typing_extensions.final
 class GetActorStateRequest(google.protobuf.message.Message):
     """GetActorStateRequest is the message to get key-value states from specific actor."""
 
@@ -1379,8 +1534,22 @@ class InvokeActorResponse(google.protobuf.message.Message):
 global___InvokeActorResponse = InvokeActorResponse
 
 @typing_extensions.final
+class GetMetadataRequest(google.protobuf.message.Message):
+    """GetMetadataRequest is the message for the GetMetadata request.
+    Empty
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___GetMetadataRequest = GetMetadataRequest
+
+@typing_extensions.final
 class GetMetadataResponse(google.protobuf.message.Message):
-    """GetMetadataResponse is a message that is returned on GetMetadata rpc call"""
+    """GetMetadataResponse is a message that is returned on GetMetadata rpc call."""
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1409,9 +1578,11 @@ class GetMetadataResponse(google.protobuf.message.Message):
     APP_CONNECTION_PROPERTIES_FIELD_NUMBER: builtins.int
     RUNTIME_VERSION_FIELD_NUMBER: builtins.int
     ENABLED_FEATURES_FIELD_NUMBER: builtins.int
+    ACTOR_RUNTIME_FIELD_NUMBER: builtins.int
     id: builtins.str
     @property
-    def active_actors_count(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ActiveActorsCount]: ...
+    def active_actors_count(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ActiveActorsCount]:
+        """Deprecated alias for actor_runtime.active_actors."""
     @property
     def registered_components(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___RegisteredComponents]: ...
     @property
@@ -1425,6 +1596,9 @@ class GetMetadataResponse(google.protobuf.message.Message):
     runtime_version: builtins.str
     @property
     def enabled_features(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def actor_runtime(self) -> global___ActorRuntime:
+        """TODO: Cassie: probably add scheduler runtime status"""
     def __init__(
         self,
         *,
@@ -1437,11 +1611,66 @@ class GetMetadataResponse(google.protobuf.message.Message):
         app_connection_properties: global___AppConnectionProperties | None = ...,
         runtime_version: builtins.str = ...,
         enabled_features: collections.abc.Iterable[builtins.str] | None = ...,
+        actor_runtime: global___ActorRuntime | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["app_connection_properties", b"app_connection_properties"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["active_actors_count", b"active_actors_count", "app_connection_properties", b"app_connection_properties", "enabled_features", b"enabled_features", "extended_metadata", b"extended_metadata", "http_endpoints", b"http_endpoints", "id", b"id", "registered_components", b"registered_components", "runtime_version", b"runtime_version", "subscriptions", b"subscriptions"]) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["actor_runtime", b"actor_runtime", "app_connection_properties", b"app_connection_properties"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["active_actors_count", b"active_actors_count", "actor_runtime", b"actor_runtime", "app_connection_properties", b"app_connection_properties", "enabled_features", b"enabled_features", "extended_metadata", b"extended_metadata", "http_endpoints", b"http_endpoints", "id", b"id", "registered_components", b"registered_components", "runtime_version", b"runtime_version", "subscriptions", b"subscriptions"]) -> None: ...
 
 global___GetMetadataResponse = GetMetadataResponse
+
+@typing_extensions.final
+class ActorRuntime(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    class _ActorRuntimeStatus:
+        ValueType = typing.NewType("ValueType", builtins.int)
+        V: typing_extensions.TypeAlias = ValueType
+
+    class _ActorRuntimeStatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActorRuntime._ActorRuntimeStatus.ValueType], builtins.type):
+        DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+        INITIALIZING: ActorRuntime._ActorRuntimeStatus.ValueType  # 0
+        """Indicates that the actor runtime is still being initialized."""
+        DISABLED: ActorRuntime._ActorRuntimeStatus.ValueType  # 1
+        """Indicates that the actor runtime is disabled.
+        This normally happens when Dapr is started without "placement-host-address"
+        """
+        RUNNING: ActorRuntime._ActorRuntimeStatus.ValueType  # 2
+        """Indicates the actor runtime is running, either as an actor host or client."""
+
+    class ActorRuntimeStatus(_ActorRuntimeStatus, metaclass=_ActorRuntimeStatusEnumTypeWrapper): ...
+    INITIALIZING: ActorRuntime.ActorRuntimeStatus.ValueType  # 0
+    """Indicates that the actor runtime is still being initialized."""
+    DISABLED: ActorRuntime.ActorRuntimeStatus.ValueType  # 1
+    """Indicates that the actor runtime is disabled.
+    This normally happens when Dapr is started without "placement-host-address"
+    """
+    RUNNING: ActorRuntime.ActorRuntimeStatus.ValueType  # 2
+    """Indicates the actor runtime is running, either as an actor host or client."""
+
+    RUNTIME_STATUS_FIELD_NUMBER: builtins.int
+    ACTIVE_ACTORS_FIELD_NUMBER: builtins.int
+    HOST_READY_FIELD_NUMBER: builtins.int
+    PLACEMENT_FIELD_NUMBER: builtins.int
+    runtime_status: global___ActorRuntime.ActorRuntimeStatus.ValueType
+    """Contains an enum indicating whether the actor runtime has been initialized."""
+    @property
+    def active_actors(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ActiveActorsCount]:
+        """Count of active actors per type."""
+    host_ready: builtins.bool
+    """Indicates whether the actor runtime is ready to host actors."""
+    placement: builtins.str
+    """Custom message from the placement provider."""
+    def __init__(
+        self,
+        *,
+        runtime_status: global___ActorRuntime.ActorRuntimeStatus.ValueType = ...,
+        active_actors: collections.abc.Iterable[global___ActiveActorsCount] | None = ...,
+        host_ready: builtins.bool = ...,
+        placement: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["active_actors", b"active_actors", "host_ready", b"host_ready", "placement", b"placement", "runtime_status", b"runtime_status"]) -> None: ...
+
+global___ActorRuntime = ActorRuntime
 
 @typing_extensions.final
 class ActiveActorsCount(google.protobuf.message.Message):
@@ -1579,6 +1808,7 @@ class PubsubSubscription(google.protobuf.message.Message):
     METADATA_FIELD_NUMBER: builtins.int
     RULES_FIELD_NUMBER: builtins.int
     DEAD_LETTER_TOPIC_FIELD_NUMBER: builtins.int
+    TYPE_FIELD_NUMBER: builtins.int
     pubsub_name: builtins.str
     topic: builtins.str
     @property
@@ -1586,6 +1816,7 @@ class PubsubSubscription(google.protobuf.message.Message):
     @property
     def rules(self) -> global___PubsubSubscriptionRules: ...
     dead_letter_topic: builtins.str
+    type: global___PubsubSubscriptionType.ValueType
     def __init__(
         self,
         *,
@@ -1594,9 +1825,10 @@ class PubsubSubscription(google.protobuf.message.Message):
         metadata: collections.abc.Mapping[builtins.str, builtins.str] | None = ...,
         rules: global___PubsubSubscriptionRules | None = ...,
         dead_letter_topic: builtins.str = ...,
+        type: global___PubsubSubscriptionType.ValueType = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["rules", b"rules"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["dead_letter_topic", b"dead_letter_topic", "metadata", b"metadata", "pubsub_name", b"pubsub_name", "rules", b"rules", "topic", b"topic"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["dead_letter_topic", b"dead_letter_topic", "metadata", b"metadata", "pubsub_name", b"pubsub_name", "rules", b"rules", "topic", b"topic", "type", b"type"]) -> None: ...
 
 global___PubsubSubscription = PubsubSubscription
 
@@ -1888,11 +2120,11 @@ class TryLockRequest(google.protobuf.message.Message):
 
     The reason why we don't make it automatically generated is:
     1. If it is automatically generated,there must be a 'my_lock_owner_id' field in the response.
-    This name is so weird that we think it is inappropriate to put it into the api spec
+      This name is so weird that we think it is inappropriate to put it into the api spec
     2. If we change the field 'my_lock_owner_id' in the response to 'lock_owner',which means the current lock owner of this lock,
-    we find that in some lock services users can't get the current lock owner.Actually users don't need it at all.
+      we find that in some lock services users can't get the current lock owner.Actually users don't need it at all.
     3. When reentrant lock is needed,the existing lock_owner is required to identify client and check "whether this client can reenter this lock".
-    So this field in the request shouldn't be removed.
+      So this field in the request shouldn't be removed.
     """
     expiry_in_seconds: builtins.int
     """Required. The time before expiry.The time unit is second."""
@@ -1953,7 +2185,7 @@ class UnlockResponse(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[UnlockResponse._Status.ValueType], builtins.type):  # noqa: F821
+    class _StatusEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[UnlockResponse._Status.ValueType], builtins.type):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SUCCESS: UnlockResponse._Status.ValueType  # 0
         LOCK_DOES_NOT_EXIST: UnlockResponse._Status.ValueType  # 1
@@ -1987,7 +2219,7 @@ class SubtleGetKeyRequest(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _KeyFormatEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[SubtleGetKeyRequest._KeyFormat.ValueType], builtins.type):  # noqa: F821
+    class _KeyFormatEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[SubtleGetKeyRequest._KeyFormat.ValueType], builtins.type):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         PEM: SubtleGetKeyRequest._KeyFormat.ValueType  # 0
         """PEM (PKIX) (default)"""
@@ -2828,3 +3060,383 @@ class PurgeWorkflowRequest(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["instance_id", b"instance_id", "workflow_component", b"workflow_component"]) -> None: ...
 
 global___PurgeWorkflowRequest = PurgeWorkflowRequest
+
+@typing_extensions.final
+class ShutdownRequest(google.protobuf.message.Message):
+    """ShutdownRequest is the request for Shutdown.
+    Empty
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___ShutdownRequest = ShutdownRequest
+
+@typing_extensions.final
+class Job(google.protobuf.message.Message):
+    """Job is the definition of a job. At least one of schedule or due_time must be
+    provided but can also be provided together.
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NAME_FIELD_NUMBER: builtins.int
+    SCHEDULE_FIELD_NUMBER: builtins.int
+    REPEATS_FIELD_NUMBER: builtins.int
+    DUE_TIME_FIELD_NUMBER: builtins.int
+    TTL_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """The unique name for the job."""
+    schedule: builtins.str
+    """schedule is an optional schedule at which the job is to be run.
+    Accepts both systemd timer style cron expressions, as well as human
+    readable '@' prefixed period strings as defined below.
+
+    Systemd timer style cron accepts 6 fields:
+    seconds | minutes | hours | day of month | month        | day of week
+    0-59    | 0-59    | 0-23  | 1-31         | 1-12/jan-dec | 0-6/sun-sat
+
+    "0 30 * * * *" - every hour on the half hour
+    "0 15 3 * * *" - every day at 03:15
+
+    Period string expressions:
+    Entry                  | Description                                  | Equivalent To
+    -----                  | -----------                                  | -------------
+    @every `<duration>`    | Run every `<duration>` (e.g. '@every 1h30m') | N/A
+    @yearly (or @annually) | Run once a year, midnight, Jan. 1st          | 0 0 0 1 1 *
+    @monthly               | Run once a month, midnight, first of month   | 0 0 0 1 * *
+    @weekly                | Run once a week, midnight on Sunday          | 0 0 0 * * 0
+    @daily (or @midnight)  | Run once a day, midnight                     | 0 0 0 * * *
+    @hourly                | Run once an hour, beginning of hour          | 0 0 * * * *
+    """
+    repeats: builtins.int
+    """repeats is the optional number of times in which the job should be
+    triggered. If not set, the job will run indefinitely or until expiration.
+    """
+    due_time: builtins.str
+    """due_time is the optional time at which the job should be active, or the
+    "one shot" time if other scheduling type fields are not provided. Accepts
+    a "point in time" string in the format of RFC3339, Go duration string
+    (calculated from job creation time), or non-repeating ISO8601.
+    """
+    ttl: builtins.str
+    """ttl is the optional time to live or expiration of the job. Accepts a
+    "point in time" string in the format of RFC3339, Go duration string
+    (calculated from job creation time), or non-repeating ISO8601.
+    """
+    @property
+    def data(self) -> google.protobuf.any_pb2.Any:
+        """payload is the serialized job payload that will be sent to the recipient
+        when the job is triggered.
+        """
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+        schedule: builtins.str | None = ...,
+        repeats: builtins.int | None = ...,
+        due_time: builtins.str | None = ...,
+        ttl: builtins.str | None = ...,
+        data: google.protobuf.any_pb2.Any | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_due_time", b"_due_time", "_repeats", b"_repeats", "_schedule", b"_schedule", "_ttl", b"_ttl", "data", b"data", "due_time", b"due_time", "repeats", b"repeats", "schedule", b"schedule", "ttl", b"ttl"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_due_time", b"_due_time", "_repeats", b"_repeats", "_schedule", b"_schedule", "_ttl", b"_ttl", "data", b"data", "due_time", b"due_time", "name", b"name", "repeats", b"repeats", "schedule", b"schedule", "ttl", b"ttl"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_due_time", b"_due_time"]) -> typing_extensions.Literal["due_time"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_repeats", b"_repeats"]) -> typing_extensions.Literal["repeats"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_schedule", b"_schedule"]) -> typing_extensions.Literal["schedule"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_ttl", b"_ttl"]) -> typing_extensions.Literal["ttl"] | None: ...
+
+global___Job = Job
+
+@typing_extensions.final
+class ScheduleJobRequest(google.protobuf.message.Message):
+    """ScheduleJobRequest is the message to create/schedule the job."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    JOB_FIELD_NUMBER: builtins.int
+    @property
+    def job(self) -> global___Job:
+        """The job details."""
+    def __init__(
+        self,
+        *,
+        job: global___Job | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["job", b"job"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["job", b"job"]) -> None: ...
+
+global___ScheduleJobRequest = ScheduleJobRequest
+
+@typing_extensions.final
+class ScheduleJobResponse(google.protobuf.message.Message):
+    """ScheduleJobResponse is the message response to create/schedule the job.
+    Empty
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___ScheduleJobResponse = ScheduleJobResponse
+
+@typing_extensions.final
+class GetJobRequest(google.protobuf.message.Message):
+    """GetJobRequest is the message to retrieve a job."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NAME_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """The name of the job."""
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["name", b"name"]) -> None: ...
+
+global___GetJobRequest = GetJobRequest
+
+@typing_extensions.final
+class GetJobResponse(google.protobuf.message.Message):
+    """GetJobResponse is the message's response for a job retrieved."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    JOB_FIELD_NUMBER: builtins.int
+    @property
+    def job(self) -> global___Job:
+        """The job details."""
+    def __init__(
+        self,
+        *,
+        job: global___Job | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["job", b"job"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["job", b"job"]) -> None: ...
+
+global___GetJobResponse = GetJobResponse
+
+@typing_extensions.final
+class DeleteJobRequest(google.protobuf.message.Message):
+    """DeleteJobRequest is the message to delete the job by name."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NAME_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """The name of the job."""
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["name", b"name"]) -> None: ...
+
+global___DeleteJobRequest = DeleteJobRequest
+
+@typing_extensions.final
+class DeleteJobResponse(google.protobuf.message.Message):
+    """DeleteJobResponse is the message response to delete the job by name.
+    Empty
+    """
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    def __init__(
+        self,
+    ) -> None: ...
+
+global___DeleteJobResponse = DeleteJobResponse
+
+@typing_extensions.final
+class ConversationAlpha1Request(google.protobuf.message.Message):
+    """ConversationAlpha1Request is the request object for Conversation."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing_extensions.final
+    class ParametersEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        @property
+        def value(self) -> google.protobuf.any_pb2.Any: ...
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: google.protobuf.any_pb2.Any | None = ...,
+        ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["value", b"value"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    @typing_extensions.final
+    class MetadataEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        value: builtins.str
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: builtins.str = ...,
+        ) -> None: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    NAME_FIELD_NUMBER: builtins.int
+    CONTEXTID_FIELD_NUMBER: builtins.int
+    INPUTS_FIELD_NUMBER: builtins.int
+    PARAMETERS_FIELD_NUMBER: builtins.int
+    METADATA_FIELD_NUMBER: builtins.int
+    SCRUBPII_FIELD_NUMBER: builtins.int
+    TEMPERATURE_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    """The name of Coverstaion component"""
+    contextID: builtins.str
+    """The ID of an existing chat (like in ChatGPT)"""
+    @property
+    def inputs(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ConversationInput]:
+        """Inputs for the conversation, support multiple input in one time."""
+    @property
+    def parameters(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, google.protobuf.any_pb2.Any]:
+        """Parameters for all custom fields."""
+    @property
+    def metadata(self) -> google.protobuf.internal.containers.ScalarMap[builtins.str, builtins.str]:
+        """The metadata passing to conversation components."""
+    scrubPII: builtins.bool
+    """Scrub PII data that comes back from the LLM"""
+    temperature: builtins.float
+    """Temperature for the LLM to optimize for creativity or predictability"""
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+        contextID: builtins.str | None = ...,
+        inputs: collections.abc.Iterable[global___ConversationInput] | None = ...,
+        parameters: collections.abc.Mapping[builtins.str, google.protobuf.any_pb2.Any] | None = ...,
+        metadata: collections.abc.Mapping[builtins.str, builtins.str] | None = ...,
+        scrubPII: builtins.bool | None = ...,
+        temperature: builtins.float | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_contextID", b"_contextID", "_scrubPII", b"_scrubPII", "_temperature", b"_temperature", "contextID", b"contextID", "scrubPII", b"scrubPII", "temperature", b"temperature"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_contextID", b"_contextID", "_scrubPII", b"_scrubPII", "_temperature", b"_temperature", "contextID", b"contextID", "inputs", b"inputs", "metadata", b"metadata", "name", b"name", "parameters", b"parameters", "scrubPII", b"scrubPII", "temperature", b"temperature"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_contextID", b"_contextID"]) -> typing_extensions.Literal["contextID"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_scrubPII", b"_scrubPII"]) -> typing_extensions.Literal["scrubPII"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_temperature", b"_temperature"]) -> typing_extensions.Literal["temperature"] | None: ...
+
+global___ConversationAlpha1Request = ConversationAlpha1Request
+
+@typing_extensions.final
+class ConversationInput(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    MESSAGE_FIELD_NUMBER: builtins.int
+    ROLE_FIELD_NUMBER: builtins.int
+    SCRUBPII_FIELD_NUMBER: builtins.int
+    message: builtins.str
+    """The message to send to the llm"""
+    role: builtins.str
+    """The role to set for the message"""
+    scrubPII: builtins.bool
+    """Scrub PII data that goes into the LLM"""
+    def __init__(
+        self,
+        *,
+        message: builtins.str = ...,
+        role: builtins.str | None = ...,
+        scrubPII: builtins.bool | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_role", b"_role", "_scrubPII", b"_scrubPII", "role", b"role", "scrubPII", b"scrubPII"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_role", b"_role", "_scrubPII", b"_scrubPII", "message", b"message", "role", b"role", "scrubPII", b"scrubPII"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_role", b"_role"]) -> typing_extensions.Literal["role"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_scrubPII", b"_scrubPII"]) -> typing_extensions.Literal["scrubPII"] | None: ...
+
+global___ConversationInput = ConversationInput
+
+@typing_extensions.final
+class ConversationAlpha1Result(google.protobuf.message.Message):
+    """ConversationAlpha1Result is the result for one input."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing_extensions.final
+    class ParametersEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        @property
+        def value(self) -> google.protobuf.any_pb2.Any: ...
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: google.protobuf.any_pb2.Any | None = ...,
+        ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["value", b"value"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    RESULT_FIELD_NUMBER: builtins.int
+    PARAMETERS_FIELD_NUMBER: builtins.int
+    result: builtins.str
+    """Result for the one conversation input."""
+    @property
+    def parameters(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, google.protobuf.any_pb2.Any]:
+        """Parameters for all custom fields."""
+    def __init__(
+        self,
+        *,
+        result: builtins.str = ...,
+        parameters: collections.abc.Mapping[builtins.str, google.protobuf.any_pb2.Any] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["parameters", b"parameters", "result", b"result"]) -> None: ...
+
+global___ConversationAlpha1Result = ConversationAlpha1Result
+
+@typing_extensions.final
+class ConversationAlpha1Response(google.protobuf.message.Message):
+    """ConversationAlpha1Response is the response for Conversation."""
+
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    CONTEXTID_FIELD_NUMBER: builtins.int
+    OUTPUTS_FIELD_NUMBER: builtins.int
+    contextID: builtins.str
+    """The ID of an existing chat (like in ChatGPT)"""
+    @property
+    def outputs(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ConversationAlpha1Result]:
+        """An array of results."""
+    def __init__(
+        self,
+        *,
+        contextID: builtins.str | None = ...,
+        outputs: collections.abc.Iterable[global___ConversationAlpha1Result] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_contextID", b"_contextID", "contextID", b"contextID"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_contextID", b"_contextID", "contextID", b"contextID", "outputs", b"outputs"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_contextID", b"_contextID"]) -> typing_extensions.Literal["contextID"] | None: ...
+
+global___ConversationAlpha1Response = ConversationAlpha1Response

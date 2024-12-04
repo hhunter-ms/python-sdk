@@ -67,6 +67,11 @@ class DaprStub(object):
                 request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.BulkPublishRequest.SerializeToString,
                 response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.BulkPublishResponse.FromString,
                 )
+        self.SubscribeTopicEventsAlpha1 = channel.stream_stream(
+                '/dapr.proto.runtime.v1.Dapr/SubscribeTopicEventsAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsRequestAlpha1.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsResponseAlpha1.FromString,
+                )
         self.InvokeBinding = channel.unary_unary(
                 '/dapr.proto.runtime.v1.Dapr/InvokeBinding',
                 request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.InvokeBindingRequest.SerializeToString,
@@ -100,11 +105,6 @@ class DaprStub(object):
         self.UnregisterActorReminder = channel.unary_unary(
                 '/dapr.proto.runtime.v1.Dapr/UnregisterActorReminder',
                 request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.UnregisterActorReminderRequest.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                )
-        self.RenameActorReminder = channel.unary_unary(
-                '/dapr.proto.runtime.v1.Dapr/RenameActorReminder',
-                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.RenameActorReminderRequest.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 )
         self.GetActorState = channel.unary_unary(
@@ -174,7 +174,7 @@ class DaprStub(object):
                 )
         self.GetMetadata = channel.unary_unary(
                 '/dapr.proto.runtime.v1.Dapr/GetMetadata',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataRequest.SerializeToString,
                 response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataResponse.FromString,
                 )
         self.SetMetadata = channel.unary_unary(
@@ -289,8 +289,28 @@ class DaprStub(object):
                 )
         self.Shutdown = channel.unary_unary(
                 '/dapr.proto.runtime.v1.Dapr/Shutdown',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ShutdownRequest.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
+        self.ScheduleJobAlpha1 = channel.unary_unary(
+                '/dapr.proto.runtime.v1.Dapr/ScheduleJobAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobRequest.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobResponse.FromString,
+                )
+        self.GetJobAlpha1 = channel.unary_unary(
+                '/dapr.proto.runtime.v1.Dapr/GetJobAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobRequest.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobResponse.FromString,
+                )
+        self.DeleteJobAlpha1 = channel.unary_unary(
+                '/dapr.proto.runtime.v1.Dapr/DeleteJobAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobRequest.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobResponse.FromString,
+                )
+        self.ConverseAlpha1 = channel.unary_unary(
+                '/dapr.proto.runtime.v1.Dapr/ConverseAlpha1',
+                request_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Request.SerializeToString,
+                response_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Response.FromString,
                 )
 
 
@@ -369,6 +389,14 @@ class DaprServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SubscribeTopicEventsAlpha1(self, request_iterator, context):
+        """SubscribeTopicEventsAlpha1 subscribes to a PubSub topic and receives topic
+        events from it.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def InvokeBinding(self, request, context):
         """Invokes binding data to specific output bindings
         """
@@ -413,13 +441,6 @@ class DaprServicer(object):
 
     def UnregisterActorReminder(self, request, context):
         """Unregister an actor reminder.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RenameActorReminder(self, request, context):
-        """Rename an actor reminder.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -684,6 +705,34 @@ class DaprServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ScheduleJobAlpha1(self, request, context):
+        """Create and schedule a job
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetJobAlpha1(self, request, context):
+        """Gets a scheduled job
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteJobAlpha1(self, request, context):
+        """Delete a job
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ConverseAlpha1(self, request, context):
+        """Converse with a LLM service
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DaprServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -737,6 +786,11 @@ def add_DaprServicer_to_server(servicer, server):
                     request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.BulkPublishRequest.FromString,
                     response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.BulkPublishResponse.SerializeToString,
             ),
+            'SubscribeTopicEventsAlpha1': grpc.stream_stream_rpc_method_handler(
+                    servicer.SubscribeTopicEventsAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsRequestAlpha1.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsResponseAlpha1.SerializeToString,
+            ),
             'InvokeBinding': grpc.unary_unary_rpc_method_handler(
                     servicer.InvokeBinding,
                     request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.InvokeBindingRequest.FromString,
@@ -770,11 +824,6 @@ def add_DaprServicer_to_server(servicer, server):
             'UnregisterActorReminder': grpc.unary_unary_rpc_method_handler(
                     servicer.UnregisterActorReminder,
                     request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.UnregisterActorReminderRequest.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            ),
-            'RenameActorReminder': grpc.unary_unary_rpc_method_handler(
-                    servicer.RenameActorReminder,
-                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.RenameActorReminderRequest.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
             'GetActorState': grpc.unary_unary_rpc_method_handler(
@@ -844,7 +893,7 @@ def add_DaprServicer_to_server(servicer, server):
             ),
             'GetMetadata': grpc.unary_unary_rpc_method_handler(
                     servicer.GetMetadata,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataRequest.FromString,
                     response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataResponse.SerializeToString,
             ),
             'SetMetadata': grpc.unary_unary_rpc_method_handler(
@@ -959,8 +1008,28 @@ def add_DaprServicer_to_server(servicer, server):
             ),
             'Shutdown': grpc.unary_unary_rpc_method_handler(
                     servicer.Shutdown,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ShutdownRequest.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'ScheduleJobAlpha1': grpc.unary_unary_rpc_method_handler(
+                    servicer.ScheduleJobAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobRequest.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobResponse.SerializeToString,
+            ),
+            'GetJobAlpha1': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetJobAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobRequest.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobResponse.SerializeToString,
+            ),
+            'DeleteJobAlpha1': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteJobAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobRequest.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobResponse.SerializeToString,
+            ),
+            'ConverseAlpha1': grpc.unary_unary_rpc_method_handler(
+                    servicer.ConverseAlpha1,
+                    request_deserializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Request.FromString,
+                    response_serializer=dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Response.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1144,6 +1213,23 @@ class Dapr(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def SubscribeTopicEventsAlpha1(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_stream(request_iterator, target, '/dapr.proto.runtime.v1.Dapr/SubscribeTopicEventsAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsRequestAlpha1.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.SubscribeTopicEventsResponseAlpha1.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def InvokeBinding(request,
             target,
             options=(),
@@ -1258,23 +1344,6 @@ class Dapr(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/UnregisterActorReminder',
             dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.UnregisterActorReminderRequest.SerializeToString,
-            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def RenameActorReminder(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/RenameActorReminder',
-            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.RenameActorReminderRequest.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -1512,7 +1581,7 @@ class Dapr(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/GetMetadata',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataRequest.SerializeToString,
             dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetMetadataResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -1903,7 +1972,75 @@ class Dapr(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/Shutdown',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ShutdownRequest.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ScheduleJobAlpha1(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/ScheduleJobAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobRequest.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ScheduleJobResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetJobAlpha1(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/GetJobAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobRequest.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.GetJobResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteJobAlpha1(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/DeleteJobAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobRequest.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.DeleteJobResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ConverseAlpha1(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/dapr.proto.runtime.v1.Dapr/ConverseAlpha1',
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Request.SerializeToString,
+            dapr_dot_proto_dot_runtime_dot_v1_dot_dapr__pb2.ConversationAlpha1Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

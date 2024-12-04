@@ -13,20 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import io
 from enum import Enum
 from typing import Dict, Optional, Union
 
 from google.protobuf.any_pb2 import Any as GrpcAny
 from google.protobuf.message import Message as GrpcMessage
+from dapr.proto import api_v1, common_v1
 
 from dapr.clients.base import DEFAULT_JSON_CONTENT_TYPE
+from dapr.clients.grpc._crypto import EncryptOptions, DecryptOptions
 from dapr.clients.grpc._helpers import (
     MetadataDict,
     MetadataTuple,
     tuple_to_dict,
     to_bytes,
     to_str,
-    unpack
+    unpack,
 )
 
 
@@ -38,6 +41,7 @@ class DaprRequest:
     Attributes:
         metadata(dict): A dict to include the headers from Dapr Request.
     """
+
     def __init__(self, metadata: MetadataTuple = ()):
         self.metadata = metadata  # type: ignore
 
@@ -83,21 +87,13 @@ class InvokeMethodRequest(DaprRequest):
             only for bytes array data.
     """
 
-    HTTP_METHODS = [
-        'GET',
-        'HEAD',
-        'POST',
-        'PUT',
-        'DELETE',
-        'CONNECT',
-        'OPTIONS',
-        'TRACE'
-    ]
+    HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']
 
     def __init__(
-            self,
-            data: Union[str, bytes, GrpcAny, GrpcMessage, None] = None,
-            content_type: Optional[str] = None):
+        self,
+        data: Union[str, bytes, GrpcAny, GrpcMessage, None] = None,
+        content_type: Optional[str] = None,
+    ):
         """Inits InvokeMethodRequestData with data and content_type.
 
         Args:
@@ -230,10 +226,8 @@ class BindingRequest(DaprRequest):
         data (bytes): the data which is used for invoke_binding request.
         metadata (Dict[str, str]): the metadata sent to the binding.
     """
-    def __init__(
-            self,
-            data: Union[str, bytes],
-            binding_metadata: Dict[str, str] = {}):
+
+    def __init__(self, data: Union[str, bytes], binding_metadata: Dict[str, str] = {}):
         """Inits BindingRequest with data and metadata if given.
 
         Args:
@@ -244,7 +238,7 @@ class BindingRequest(DaprRequest):
             ValueError: data is not bytes or str.
         """
         super(BindingRequest, self).__init__(())
-        self.data = data   # type: ignore
+        self.data = data  # type: ignore
         self._binding_metadata = binding_metadata
 
     @property
@@ -269,8 +263,9 @@ class BindingRequest(DaprRequest):
 
 class TransactionOperationType(Enum):
     """Represents the type of operation for a Dapr Transaction State Api Call"""
-    upsert = "upsert"
-    delete = "delete"
+
+    upsert = 'upsert'
+    delete = 'delete'
 
 
 class TransactionalStateOperation:
@@ -284,11 +279,12 @@ class TransactionalStateOperation:
     """
 
     def __init__(
-            self,
-            key: str,
-            data: Union[bytes, str],
-            etag: Optional[str] = None,
-            operation_type: TransactionOperationType = TransactionOperationType.upsert):
+        self,
+        key: str,
+        data: Optional[Union[bytes, str]] = None,
+        etag: Optional[str] = None,
+        operation_type: TransactionOperationType = TransactionOperationType.upsert,
+    ):
         """Initializes TransactionalStateOperation item from
         :obj:`runtime_v1.TransactionalStateOperation`.
 
@@ -301,7 +297,7 @@ class TransactionalStateOperation:
         Raises:
             ValueError: data is not bytes or str.
         """
-        if not isinstance(data, (bytes, str)):
+        if operation_type != TransactionOperationType.delete and not isinstance(data, (bytes, str)):
             raise ValueError(f'invalid type for data {type(data)}')
 
         self._key = key
@@ -315,7 +311,7 @@ class TransactionalStateOperation:
         return self._key
 
     @property
-    def data(self) -> Union[bytes, str]:
+    def data(self) -> Union[bytes, str, None]:
         """Gets raw data."""
         return self._data
 
@@ -328,3 +324,97 @@ class TransactionalStateOperation:
     def operation_type(self) -> TransactionOperationType:
         """Gets etag."""
         return self._operation_type
+
+
+class EncryptRequestIterator(DaprRequest):
+    """An iterator for cryptography encrypt API requests.
+
+    This reads data from a given stream by chunks and converts it to an iterator of
+    cryptography encrypt API requests.
+    This iterator will be used for encrypt gRPC bidirectional streaming requests.
+    """
+
+    def __init__(
+        self,
+        data: Union[str, bytes],
+        options: EncryptOptions,
+    ):
+        """Initialize EncryptRequestIterator with data and encryption options.
+
+        Args:
+            data (Union[str, bytes]): data to be encrypted
+            options (EncryptOptions): encryption options
+        """
+        self.data = io.BytesIO(to_bytes(data))
+        self.options = options.get_proto()
+        self.buffer_size = 2 << 10  # 2KiB
+        self.seq = 0
+
+    def __iter__(self):
+        """Returns the iterator object itself."""
+        return self
+
+    def __next__(self):
+        """Read the next chunk of data from the input stream and create a gRPC stream request."""
+        # Read data from the input stream, in chunks of up to 2KiB
+        # Send the data until we reach the end of the input stream
+        chunk = self.data.read(self.buffer_size)
+        if not chunk:
+            raise StopIteration
+
+        payload = common_v1.StreamPayload(data=chunk, seq=self.seq)
+        if self.seq == 0:
+            # If this is the first chunk, add the options
+            request_proto = api_v1.EncryptRequest(payload=payload, options=self.options)
+        else:
+            request_proto = api_v1.EncryptRequest(payload=payload)
+
+        self.seq += 1
+        return request_proto
+
+
+class DecryptRequestIterator(DaprRequest):
+    """An iterator for cryptography decrypt API requests.
+
+    This reads data from a given stream by chunks and converts it to an iterator of decrypt
+    cryptography API requests.
+    This iterator will be used for decrypt gRPC bidirectional streaming requests.
+    """
+
+    def __init__(
+        self,
+        data: Union[str, bytes],
+        options: DecryptOptions,
+    ):
+        """Initialize DecryptRequestIterator with data and decryption options.
+
+        Args:
+            data (Union[str, bytes]): data to be decrypted
+            options (DecryptOptions): decryption options
+        """
+        self.data = io.BytesIO(to_bytes(data))
+        self.options = options.get_proto()
+        self.buffer_size = 2 << 10  # 2KiB
+        self.seq = 0
+
+    def __iter__(self):
+        """Returns the iterator object itself."""
+        return self
+
+    def __next__(self):
+        """Read the next chunk of data from the input stream and create a gRPC stream request."""
+        # Read data from the input stream, in chunks of up to 2KiB
+        # Send the data until we reach the end of the input stream
+        chunk = self.data.read(self.buffer_size)
+        if not chunk:
+            raise StopIteration
+
+        payload = common_v1.StreamPayload(data=chunk, seq=self.seq)
+        if self.seq == 0:
+            # If this is the first chunk, add the options
+            request_proto = api_v1.DecryptRequest(payload=payload, options=self.options)
+        else:
+            request_proto = api_v1.DecryptRequest(payload=payload)
+
+        self.seq += 1
+        return request_proto

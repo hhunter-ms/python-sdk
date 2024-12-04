@@ -18,11 +18,16 @@ import unittest
 from google.protobuf.any_pb2 import Any as GrpcAny
 
 from dapr.clients.grpc._response import (
-    DaprResponse, InvokeMethodResponse, BindingResponse, StateResponse,
-    BulkStateItem
+    DaprResponse,
+    InvokeMethodResponse,
+    BindingResponse,
+    StateResponse,
+    BulkStateItem,
+    EncryptResponse,
+    DecryptResponse,
 )
 
-from dapr.proto import common_v1
+from dapr.proto import api_v1, common_v1
 
 
 class DaprResponseTests(unittest.TestCase):
@@ -50,28 +55,24 @@ class InvokeMethodResponseTests(unittest.TestCase):
 
     def test_is_proto_for_non_protobuf(self):
         test_data = GrpcAny(value=b'hello dapr')
-        resp = InvokeMethodResponse(
-            data=test_data,
-            content_type='application/json')
+        resp = InvokeMethodResponse(data=test_data, content_type='application/json')
         self.assertFalse(resp.is_proto())
 
     def test_is_proto_for_protobuf(self):
-        fake_req = common_v1.InvokeRequest(method="test")
+        fake_req = common_v1.InvokeRequest(method='test')
         test_data = GrpcAny()
         test_data.Pack(fake_req)
         resp = InvokeMethodResponse(data=test_data)
         self.assertTrue(resp.is_proto())
 
     def test_proto(self):
-        fake_req = common_v1.InvokeRequest(method="test")
+        fake_req = common_v1.InvokeRequest(method='test')
         resp = InvokeMethodResponse(data=fake_req)
         self.assertIsNotNone(resp.proto)
 
     def test_data(self):
         test_data = GrpcAny(value=b'hello dapr')
-        resp = InvokeMethodResponse(
-            data=test_data,
-            content_type='application/json')
+        resp = InvokeMethodResponse(data=test_data, content_type='application/json')
         self.assertEqual(b'hello dapr', resp.data)
         self.assertEqual('hello dapr', resp.text())
         self.assertEqual('application/json', resp.content_type)
@@ -82,7 +83,7 @@ class InvokeMethodResponseTests(unittest.TestCase):
 
     def test_unpack(self):
         # arrange
-        fake_req = common_v1.InvokeRequest(method="test")
+        fake_req = common_v1.InvokeRequest(method='test')
 
         # act
         resp = InvokeMethodResponse(data=fake_req)
@@ -90,7 +91,7 @@ class InvokeMethodResponseTests(unittest.TestCase):
         resp.unpack(resp_proto)
 
         # assert
-        self.assertEqual("test", resp_proto.method)
+        self.assertEqual('test', resp_proto.method)
 
 
 class InvokeBindingResponseTests(unittest.TestCase):
@@ -126,6 +127,32 @@ class BulkStateItemTests(unittest.TestCase):
     def test_data(self):
         item = BulkStateItem(key='item1', data=b'{ "status": "ok" }')
         self.assertEqual({'status': 'ok'}, item.json())
+
+
+class CryptoResponseTests(unittest.TestCase):
+    def response_stream(self):
+        stream1 = common_v1.StreamPayload(data=b'hello', seq=0)
+        stream2 = common_v1.StreamPayload(data=b' dapr', seq=1)
+        for strm in (stream1, stream2):
+            yield api_v1.EncryptResponse(payload=strm)
+
+    def test_encrypt_response_read_bytes(self):
+        resp = EncryptResponse(stream=self.response_stream())
+        self.assertEqual(resp.read(5), b'hello')
+        self.assertEqual(resp.read(5), b' dapr')
+
+    def test_encrypt_response_read_all(self):
+        resp = EncryptResponse(stream=self.response_stream())
+        self.assertEqual(resp.read(), b'hello dapr')
+
+    def test_decrypt_response_read_bytes(self):
+        resp = DecryptResponse(stream=self.response_stream())
+        self.assertEqual(resp.read(5), b'hello')
+        self.assertEqual(resp.read(5), b' dapr')
+
+    def test_decrypt_response_read_all(self):
+        resp = DecryptResponse(stream=self.response_stream())
+        self.assertEqual(resp.read(), b'hello dapr')
 
 
 if __name__ == '__main__':

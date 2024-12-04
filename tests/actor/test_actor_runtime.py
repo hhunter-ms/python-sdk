@@ -19,6 +19,7 @@ from datetime import timedelta
 
 from dapr.actor.runtime.runtime import ActorRuntime
 from dapr.actor.runtime.config import ActorRuntimeConfig
+from dapr.conf import settings
 from dapr.serializers import DefaultJSONSerializer
 
 from tests.actor.fake_actor_classes import (
@@ -28,9 +29,20 @@ from tests.actor.fake_actor_classes import (
 )
 
 from tests.actor.utils import _run
+from tests.clients.fake_http_server import FakeHttpServer
 
 
 class ActorRuntimeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = FakeHttpServer(3500)
+        cls.server.start()
+        settings.DAPR_HTTP_PORT = 3500
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown_server()
+
     def setUp(self):
         ActorRuntime._actor_managers = {}
         ActorRuntime.set_actor_config(ActorRuntimeConfig())
@@ -56,8 +68,8 @@ class ActorRuntimeTests(unittest.TestCase):
 
         # apply new config
         new_config = ActorRuntimeConfig(
-            timedelta(hours=3), timedelta(seconds=10),
-            timedelta(minutes=1), False)
+            timedelta(hours=3), timedelta(seconds=10), timedelta(minutes=1), False
+        )
 
         ActorRuntime.set_actor_config(new_config)
         config = ActorRuntime.get_actor_config()
@@ -84,13 +96,15 @@ class ActorRuntimeTests(unittest.TestCase):
         _run(ActorRuntime.register_actor(FakeMultiInterfacesActor))
 
         request_body = {
-            "message": "hello dapr",
+            'message': 'hello dapr',
         }
 
         test_request_body = self._serializer.serialize(request_body)
-        response = _run(ActorRuntime.dispatch(
-            FakeMultiInterfacesActor.__name__, 'test-id',
-            "ActionMethod", test_request_body))
+        response = _run(
+            ActorRuntime.dispatch(
+                FakeMultiInterfacesActor.__name__, 'test-id', 'ActionMethod', test_request_body
+            )
+        )
 
         self.assertEqual(b'"hello dapr"', response)
 
@@ -102,11 +116,14 @@ class ActorRuntimeTests(unittest.TestCase):
 
     def test_fire_timer_success(self):
         # Fire timer
-        _run(ActorRuntime.fire_timer(
-            FakeSimpleTimerActor.__name__,
-            'test-id',
-            'test_timer',
-            '{ "callback": "timer_callback", "data": "timer call" }'.encode('UTF8')))
+        _run(
+            ActorRuntime.fire_timer(
+                FakeSimpleTimerActor.__name__,
+                'test-id',
+                'test_timer',
+                '{ "callback": "timer_callback", "data": "timer call" }'.encode('UTF8'),
+            )
+        )
 
         manager = ActorRuntime._actor_managers[FakeSimpleTimerActor.__name__]
         actor = manager._active_actors['test-id']
@@ -114,8 +131,11 @@ class ActorRuntimeTests(unittest.TestCase):
 
     def test_fire_timer_unregistered(self):
         with self.assertRaises(ValueError):
-            _run(ActorRuntime.fire_timer(
-                'UnknownType',
-                'test-id',
-                'test_timer',
-                '{ "callback": "timer_callback", "data": "timer call" }'.encode('UTF8')))
+            _run(
+                ActorRuntime.fire_timer(
+                    'UnknownType',
+                    'test-id',
+                    'test_timer',
+                    '{ "callback": "timer_callback", "data": "timer call" }'.encode('UTF8'),
+                )
+            )

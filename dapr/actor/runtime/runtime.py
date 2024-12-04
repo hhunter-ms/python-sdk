@@ -15,7 +15,7 @@ limitations under the License.
 
 import asyncio
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, Callable
 
 from dapr.actor.id import ActorId
 from dapr.actor.runtime.actor import Actor
@@ -42,10 +42,13 @@ class ActorRuntime:
 
     @classmethod
     async def register_actor(
-            cls, actor: Type[Actor],
-            message_serializer: Serializer = DefaultJSONSerializer(),
-            state_serializer: Serializer = DefaultJSONSerializer(),
-            http_timeout_seconds: int = settings.DAPR_HTTP_TIMEOUT_SECONDS) -> None:
+        cls,
+        actor: Type[Actor],
+        message_serializer: Serializer = DefaultJSONSerializer(),
+        state_serializer: Serializer = DefaultJSONSerializer(),
+        http_timeout_seconds: int = settings.DAPR_HTTP_TIMEOUT_SECONDS,
+        actor_factory: Optional[Callable[['ActorRuntimeContext', ActorId], 'Actor']] = None,
+    ) -> None:
         """Registers an :class:`Actor` object with the runtime.
 
         Args:
@@ -58,7 +61,9 @@ class ActorRuntime:
         type_info = ActorTypeInformation.create(actor)
         # TODO: We will allow to use gRPC client later.
         actor_client = DaprActorHttpClient(message_serializer, timeout=http_timeout_seconds)
-        ctx = ActorRuntimeContext(type_info, message_serializer, state_serializer, actor_client)
+        ctx = ActorRuntimeContext(
+            type_info, message_serializer, state_serializer, actor_client, actor_factory
+        )
 
         # Create an ActorManager, override existing entry if registered again.
         async with cls._actor_managers_lock:
@@ -88,9 +93,13 @@ class ActorRuntime:
 
     @classmethod
     async def dispatch(
-            cls, actor_type_name: str, actor_id: str,
-            actor_method_name: str, request_body: bytes,
-            reentrancy_id: Optional[str] = None) -> bytes:
+        cls,
+        actor_type_name: str,
+        actor_id: str,
+        actor_method_name: str,
+        request_body: bytes,
+        reentrancy_id: Optional[str] = None,
+    ) -> bytes:
         """Dispatches actor method defined in actor_type.
 
         Args:
@@ -115,8 +124,8 @@ class ActorRuntime:
 
     @classmethod
     async def fire_reminder(
-            cls, actor_type_name: str, actor_id: str,
-            name: str, state: bytes) -> None:
+        cls, actor_type_name: str, actor_id: str, name: str, state: bytes
+    ) -> None:
         """Fires a reminder for the Actor.
 
         Args:
@@ -135,10 +144,7 @@ class ActorRuntime:
         await manager.fire_reminder(ActorId(actor_id), name, state)
 
     @classmethod
-    async def fire_timer(
-            cls, actor_type_name: str,
-            actor_id: str, name: str,
-            state: bytes) -> None:
+    async def fire_timer(cls, actor_type_name: str, actor_id: str, name: str, state: bytes) -> None:
         """Fires a timer for the Actor.
 
         Args:
